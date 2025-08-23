@@ -1,0 +1,33 @@
+:root {
+  --bs-primary: #c96673;
+  --bs-primary-rgb: 201, 102, 115;
+  --bs-pink: #c96673;
+  --bs-link-color: #c96673;
+  --bs-link-hover-color: #aa5661; /* versi lebih gelap untuk hover */
+}
+
+
+/* Sidebar warna pink */
+#sidebar .sidebar-wrapper {
+  background-color: #C96673 !important;
+  color: #ffffff !important;
+}
+
+/* Warna teks sidebar */
+#sidebar .sidebar-wrapper .sidebar-menu a,
+#sidebar .sidebar-wrapper .sidebar-menu span,
+#sidebar .sidebar-wrapper .sidebar-menu i {
+  color: #ffffff !important;
+}
+
+/* Hover & active menu di sidebar */
+#sidebar .sidebar-wrapper .sidebar-menu a:hover,
+#sidebar .sidebar-wrapper .sidebar-menu .active > a {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+/* Warna background body */
+body {
+  background-color: #eadcdc !important;
+}
