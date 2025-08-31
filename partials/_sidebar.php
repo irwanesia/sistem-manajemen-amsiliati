@@ -99,7 +99,7 @@
               <li class="submenu-item">
                 <a href="tahun-ajaran"><i class="bi bi-dot"></i> Tahun Ajaran</a>
               </li>
-              <li class="submenu-item">
+              <li class="submenu-item" hidden>
                 <a href="materi"><i class="bi bi-dot"></i> Materi</a>
               </li>
             </ul>
@@ -146,7 +146,7 @@
 
         <?php elseif ($_SESSION['role'] == 'Wali Kelas') : ?>
           <li class="sidebar-item">
-            <a href="santri" class='sidebar-link'>
+            <a href="kenaikan" class='sidebar-link'>
               <i class="bi bi-graph-up"></i>
               <span>Data Kenaikan</span>
             </a>
@@ -157,7 +157,7 @@
               <i class="bi bi-file-earmark-bar-graph"></i>
               <span>Laporan</span>
             </a>
-            <ul class="submenu">
+            <!-- <ul class="submenu">
               <li class="submenu-item">
                 <a href="laporan&action=lap-santri"><i class="bi bi-dot"></i> Laporan Skor</a>
               </li>
@@ -167,11 +167,22 @@
               <li class="submenu-item">
                 <a href="laporan&action=lap-evaluasi"><i class="bi bi-dot"></i> Laporan Nilai</a>
               </li>
+            </ul> -->
+            <ul class="submenu">
+              <li class="submenu-item">
+                <a href="evaluasi-santri&action=rekap-absensi"><i class="bi bi-dot"></i> Rekap Absen</a>
+              </li>
+              <li class="submenu-item">
+                <a href="evaluasi-santri&action=rekap-skor"><i class="bi bi-dot"></i> Rekap Skor</a>
+              </li>
+              <li class="submenu-item">
+                <a href="evaluasi-santri&action=nilai"><i class="bi bi-dot"></i> Data Nilai</a>
+              </li>
             </ul>
           </li>
 
           <li class="sidebar-item">
-            <a href="evaluasi" class='sidebar-link'>
+            <a href="legger" class='sidebar-link'>
               <i class="bi bi-journal-bookmark"></i>
               <span>Legger</span>
             </a>
@@ -193,7 +204,7 @@
           </li>
 
           <li class="sidebar-item has-sub">
-            <a href="#evaluasi" class='sidebar-link'>
+            <a href="#" class='sidebar-link'>
               <i class="bi bi-clipboard-data"></i>
               <span>Evaluasi Santri</span>
             </a>

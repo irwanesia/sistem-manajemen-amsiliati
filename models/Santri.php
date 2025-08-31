@@ -22,6 +22,15 @@ class Santri
         return $statement->fetchAll();
     }
 
+    public function findByNis($nis)
+    {
+        global $pdo;
+        $query = "SELECT COUNT(*) FROM santri WHERE nis = ?";
+        $statement = $pdo->prepare($query);
+        $statement->execute([$nis]);
+        return $statement->fetchAll();
+    }
+
     public function findSantriByUstadzah($id)
     {
         global $pdo;

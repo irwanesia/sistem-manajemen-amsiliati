@@ -28,15 +28,24 @@ class Jilid
         return $statement->fetch();
     }
 
-    public function findSantriByJilidId($jilid_id)
+    public function findJilidByJilidId($id_jilid)
+    {
+        global $pdo;
+        $query = "SELECT * FROM jilid WHERE id_jilid = ?";
+        $statement = $pdo->prepare($query);
+        $statement->execute([$id_jilid]);
+        return $statement->fetch();
+    }
+
+    public function findSantriByJilidId($jilid_id, $thn)
     {
         global $pdo;
         $query = "SELECT s.nama, s.id_santri, k.id_kelas_jilid
                 FROM kelas_jilid k
                 JOIN santri s ON k.santri_id=s.id_santri
-                WHERE k.jilid_id = ?";
+                WHERE k.jilid_id = ? AND k.tahun_ajaran_id = ?";
         $statement = $pdo->prepare($query);
-        $statement->execute([$jilid_id]);
+        $statement->execute([$jilid_id, $thn]);
         return $statement->fetchAll();
     }
 

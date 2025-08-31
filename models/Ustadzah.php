@@ -45,6 +45,19 @@ class Ustadzah
         $statement->execute([$id]);
         return $statement->fetch();
     }
+    
+    public function findNamaUstadzahByIdJilid($id)
+    {
+        global $pdo;
+        $query = "SELECT 
+                    u.nama_ustadzah 
+                FROM ustadzah u
+                JOIN jilid j ON u.id_ustadzah = j.id_ustadzah
+                WHERE j.id_jilid = ?";
+        $statement = $pdo->prepare($query);
+        $statement->execute([$id]);
+        return $statement->fetch();
+    }
 
     public function delete($id)
     {

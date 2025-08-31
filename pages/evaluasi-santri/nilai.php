@@ -1,7 +1,11 @@
 <?php
 $thn_id = isset($_GET['tahun']) ? intval($_GET['tahun']) : null;
 $jilid_id = isset($_GET['jilid']) ? $_GET['jilid'] : '';
-$id_ustadzah = isset($_SESSION['id_ustadzah']) ? intval($_SESSION['id_ustadzah']) : null;
+if ($_SESSION['role'] == 'Ustadzah') {
+    $id_ustadzah = isset($_SESSION['id_ustadzah']) ? intval($_SESSION['id_ustadzah']) : null;
+} elseif ($_SESSION['role'] == 'Wali Kelas') {
+    $id_ustadzah = isset($_GET['jilid']) ? $_GET['jilid'] : null;
+}
 ?>
 
 <div class="row">
@@ -10,33 +14,66 @@ $id_ustadzah = isset($_SESSION['id_ustadzah']) ? intval($_SESSION['id_ustadzah']
       <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="card-title mb-0">Evaluasi Santri - Nilai Akhir</h4>
           <!-- Tanggal -->
-          <div class="row">
-          
-              <!-- Tahun Ajaran -->
-              <div class="col-md-12">
-                  <select name="tahun_ajaran_id" class="form-select tahunSelect" onchange="updateFilter()">
-                      <option value="">-- Pilih Tahun Ajaran --</option>
-                      <?php foreach (get_tahun_ajaran() as $ta): ?>
-                          <option value="<?= $ta['id_tahun']; ?>" <?= ($thn_id == $ta['id_tahun']) ? 'selected' : ''; ?>>
-                              <?= $ta['tahun']; ?>
-                          </option>
-                      <?php endforeach; ?>
-                  </select>
-              </div>
-          </div>
+          <?php if ($_SESSION['role'] == 'Wali Kelas') : ?>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <select id="jilid" class="form-select jilidSelect" onchange="updateFilter()">
+                                    <option value="">-- Jilid --</option>
+                                    <?php foreach (get_jilid() as $ta): ?>
+                                        <option value="<?= $ta['id_ustadzah'] ?>" <?= ($ta['id_ustadzah'] == $id_ustadzah) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($ta['nama_jilid']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <select id="tahun" class="form-select tahunSelect" onchange="updateFilter()">
+                                    <option value="">-- Semester --</option>
+                                    <?php foreach (get_tahun_ajaran() as $ta): ?>
+                                        <option value="<?= $ta['id_tahun'] ?>" <?= ($ta['id_tahun'] == $thn_id) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($ta['semester'] ." - ".$ta['tahun']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                <?php else : ?>
+                    <div class="col-md-4">
+                         <select id="tahun" class="form-select tahunSelect" onchange="location.href='?tahun=' + this.value">
+                            <option value="">-- Semester --</option>
+                            <?php foreach (get_tahun_ajaran() as $ta): ?>
+                                <option value="<?= $ta['id_tahun'] ?>" <?= ($ta['id_tahun'] == $thn_id) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($ta['semester'] ." - ".$ta['tahun']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif ?>
       </div>
       
         <script>
-          function updateFilter() {
-            var tahunId = document.querySelector('.tahunSelect').value;
-            var params = new URLSearchParams();
-            
-            if (tahunId) params.append('tahun', tahunId);
-            
-            var baseUrl = window.location.href.split('?')[0];
-            window.location.href = params.toString() ? baseUrl + '?' + params.toString() : baseUrl;
-          }
-        </script>
+                function updateFilter() {
+                    // Ambil value dari dropdown
+                    var tahunId = document.querySelector('.tahunSelect').value;
+                    var jilidId = document.querySelector('.jilidSelect').value;
+                    
+                    // Buat parameter URL
+                    var params = new URLSearchParams();
+                    
+                    if (tahunId) params.append('tahun', tahunId);
+                    if (jilidId) params.append('jilid', jilidId);
+                    
+                    // Update URL dengan mempertahankan base URL yang benar
+                    var baseUrl = window.location.href.split('?')[0];
+                    if (params.toString()) {
+                        window.location.href = baseUrl + '?' + params.toString();
+                    } else {
+                        window.location.href = baseUrl;
+                    }
+                }
+            </script>
       
       <div class="card-body">
         <!-- Filter Section -->
@@ -59,12 +96,11 @@ $id_ustadzah = isset($_SESSION['id_ustadzah']) ? intval($_SESSION['id_ustadzah']
                 <th>No</th>
                 <th>Nama Santri</th>
                 <th>Nama Jilid</th>
-                <th>Nilai Angka</th>
-                <th>Predikat</th>
+                <th>Kategori</th>
+                <th>Nilai Akhir</th>
                 <th>Status Lulus</th>
-                <th>Catatan</th>
-                <th>Tanggal Penilaian</th>
-                <th>Aksi</th>
+                <!-- <th>Catatan</th> -->
+                <!-- <th>Tanggal Penilaian</th> -->
               </tr>
             </thead>
             <tbody>
@@ -74,28 +110,19 @@ $id_ustadzah = isset($_SESSION['id_ustadzah']) ? intval($_SESSION['id_ustadzah']
                     <td><?= $i + 1 ?></td>
                     <td><?= $row['nama_santri'] ?></td>
                     <td><?= $row['nama_jilid'] ?></td>
-                    <td><?= $row['nilai_rata2'] ?></td>
-                    <td><?= $row['predikat'] ?? '-' ?></td>
+                    <td><?= $row['kategori'] ?></td>
+                    <td><?= $row['skor_akhir'] ?></td>
                     <td>
-                      <?php if ($row['status_lulus'] == null): ?>
-                        -
-                      <?php else: ?>
-                        <?php if ($row['status_lulus'] == 1): ?>
-                            <span class="badge bg-success">Lulus</span>
-                        <?php else: ?>
-                            <span class="badge bg-danger">Tidak Lulus</span>
-                        <?php endif; ?>
+                      <?php if ($row['skor_akhir'] >= 75): ?>
+                        <span class="badge bg-success">Lulus</span>
+                      <?php elseif ($row['skor_akhir'] > 0 ): ?>
+                        <span class="badge bg-danger">Tidak Lulus</span>
+                      <?php elseif ($row['skor_akhir'] == null): ?>
+                          <span class="badge bg-warning">Belum Ada Status</span>
                       <?php endif; ?>
                     </td>
-                    <td><?= $row['catatan'] ?? '-' ?></td>
-                    <td><?= $row['tanggal_penilaian'] ?? '-' ?></td>
-                    <td>
-                        <?php if ($row['nilai_angka'] === null): ?>
-                            <a href="<?= base_url('nilai/input/'.$row['id_santri'].'/'.$kelasJilidTerpilih) ?>" class="btn btn-sm btn-primary">Input</a>
-                        <?php else: ?>
-                            <a href="<?= base_url('nilai/edit/'.$row['id_nilai']) ?>" class="btn btn-sm btn-warning">Edit</a>
-                        <?php endif; ?>
-                      </td>
+                    <!-- <td><?php // $row['catatan'] ?? '-' ?></td> -->
+                    <!-- <td><?php // $row['tanggal_penilaian'] ?? '-' ?></td> -->
                 <?php endforeach; ?>
               <?php else: ?>
                 <tr>

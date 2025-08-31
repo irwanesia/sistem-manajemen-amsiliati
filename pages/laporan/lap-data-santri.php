@@ -5,7 +5,7 @@
       <div class="card-body">
         <div class="d-flex justify-content-between">
           <h4 class="card-title">Laporan Data Santri</h4>
-          <a href="./laporan&action=cetak-kriteria" class="btn btn-primary btn-rounded">
+          <a href="./laporan&action=cetak-lap-data-santri" class="btn btn-primary btn-rounded">
             <i class="bi bi-printer"></i> Cetak
           </a>
         </div>
@@ -19,7 +19,6 @@
                 <th> Jenis Kelamin </th>
                 <th> Tanggal Lahir </th>
                 <th> Alamat </th>
-                <th> Status </th>
               </tr>
             </thead>
             <tbody>
@@ -33,7 +32,6 @@
                   <td><?= $row['jenis_kelamin'] == 'L' ? 'Laki-laki' : 'Perempuan' ?></td>
                   <td><?= $row['tanggal_lahir'] ?></td>
                   <td><?= $row['alamat'] ?></td>
-                  <td><?= $row['status_aktif'] == 1 ? 'Aktif' : 'Tidak Aktif' ?></td>
                 </tr>
               <?php endforeach ?>
             </tbody>

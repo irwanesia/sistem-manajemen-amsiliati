@@ -43,10 +43,10 @@ if (!function_exists('get_santri_by_id')) {
     }
 }
 if (!function_exists('get_santri_by_id_jilid')) {
-    function get_santri_by_id_jilid($id)
+    function get_santri_by_id_jilid($id_jilid, $thn)
     {
         $santri = new Jilid();
-        $santri_data = $santri->findSantriByJilidId($id);
+        $santri_data = $santri->findSantriByJilidId($id_jilid, $thn);
         return $santri_data;
     }
 }
@@ -325,6 +325,7 @@ if (!function_exists('get_pendaftar')) {
     }
 }
 
+// ================ Ustadzah ========================
 // ustadzah
 if (!function_exists('get_ustadzah')) {
     function get_ustadzah()
@@ -340,6 +341,7 @@ if (!function_exists('get_ustadzah')) {
         return $ustadzah_data;
     }
 }
+
 if (!function_exists('get_ustadzah_kamar')) {
     function get_ustadzah_kamar()
     {
@@ -374,6 +376,15 @@ if (!function_exists('get_ustadzah_by_id')) {
     }
 }
 
+if (!function_exists('get_nama_ustadzah_by_jilidId')) {
+    function get_nama_ustadzah_by_jilidId($id)
+    {
+        $ustadzah = new Ustadzah();
+        $ustadzah_data = $ustadzah->findNamaUstadzahByIdJilid($id);
+        return $ustadzah_data['nama_ustadzah'];
+    }
+}
+
 if (!function_exists('get_delete_ustadzah')) {
     function get_delete_ustadzah($id)
     {
@@ -383,6 +394,7 @@ if (!function_exists('get_delete_ustadzah')) {
     }
 }
 
+// ==================== Jilid ========================
 // Jilid
 if (!function_exists('get_jilid')) {
     function get_jilid()
@@ -398,6 +410,15 @@ if (!function_exists('get_jilid_by_id')) {
     {
         $jilid = new Jilid();
         $jilid_data = $jilid->findById($id);
+        return $jilid_data;
+    }
+}
+
+if (!function_exists('get_jilid_by_jilidId')) {
+    function get_jilid_by_jilidId($id)
+    {
+        $jilid = new Jilid();
+        $jilid_data = $jilid->findJilidByJilidId($id);
         return $jilid_data;
     }
 }
@@ -436,6 +457,36 @@ if (!function_exists('get_poin')) {
             $poin_data = $poin->findNilaiAkhir($thn_id);
             return $poin_data;
         }
+    }
+}
+
+// ==================== Kenaikan ========================
+if (!function_exists('get_kenaikan_jilid')) {
+    function get_kenaikan_jilid($jilid_id, $thn_id)
+    {
+        $kenaikan = new Kenaikan();
+        $kenaikan_data = $kenaikan->getKenaikanJilidByTahun($jilid_id, $thn_id);
+        return $kenaikan_data;
+    }
+}
+
+
+if (!function_exists('cekKenaikanData')) {
+    function cekKenaikanData($kelasJilidId)
+    {
+        $kenaikan = new Kenaikan();
+        $kenaikan_data = $kenaikan->cekDataKenaikan($kelasJilidId);
+        return $kenaikan_data;
+    }
+} 
+
+// ==================== legger ========================
+if (!function_exists('get_legger')) {
+    function get_legger($jilid_id, $thn_id)
+    {
+        $legger = new Skor();
+        $legger_data = $legger->findLegger($jilid_id, $thn_id);
+        return $legger_data;
     }
 }
 
@@ -602,6 +653,30 @@ function convertExcelDateToDbFormat($excelDate) {
     }
 }
 
+function tanggalIndonesia($date) {
+    // Array nama bulan dalam bahasa Indonesia
+    $bulan = array(
+        'January' => 'Januari',
+        'February' => 'Februari',
+        'March' => 'Maret',
+        'April' => 'April',
+        'May' => 'Mei',
+        'June' => 'Juni',
+        'July' => 'Juli',
+        'August' => 'Agustus',
+        'September' => 'September',
+        'October' => 'Oktober',
+        'November' => 'November',
+        'December' => 'Desember'
+    );
+    
+    // Konversi nama bulan
+    $tanggal = date("d F Y", strtotime($date));
+    $tanggal = strtr($tanggal, $bulan);
+    
+    return $tanggal;
+}
+
 
 // membuat fungsi untuk mengecek session role, apakah dia sebagai admin dgn representasi angka 1 atau sebagai user dengan representasi 2
 if (!function_exists('cek_session_role')) {
@@ -651,6 +726,12 @@ if (!function_exists('switch_case')) {
                 break;
             case 'kelas':
                 $subtitle = 'Data Kelas Jilid';
+                break;
+            case 'skor':
+                $subtitle = 'Data Skor Santri';
+                break;
+            case 'nilai':
+                $subtitle = 'Data Nilai Santri';
                 break;
             case 'tahun-ajaran':
                 $subtitle = 'Data Tahun Ajaran';

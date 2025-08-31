@@ -17,10 +17,40 @@ class Skor
         return $statement->fetchAll();
     }
 
+    public function findLegger($jilid_id, $tahun_id)
+    {
+        global $pdo;
+        $query = "SELECT 
+                    s.id_santri,
+                    s.nis,
+                    s.nama,
+                    MAX(CASE WHEN sk.kategori = 'Ujian Tulis' THEN IFNULL(sk.skor_akhir, sk.skor_awal) END) AS nilai_tulis,
+                    MAX(CASE WHEN sk.kategori = 'Ujian Lisan' THEN IFNULL(sk.skor_akhir, sk.skor_awal) END) AS nilai_lisan,
+                    ROUND((
+                        (MAX(CASE WHEN sk.kategori = 'Ujian Tulis' THEN IFNULL(sk.skor_akhir, sk.skor_awal) END) +
+                        MAX(CASE WHEN sk.kategori = 'Ujian Lisan' THEN IFNULL(sk.skor_akhir, sk.skor_awal) END)
+                        ) / 2
+                    ), 2) AS rata_rata,
+                    ta.tahun,
+                    kj.tahun_ajaran_id,
+                    kj.jilid_id
+                FROM skor sk
+                JOIN kelas_jilid kj ON sk.kelas_jilid_id = kj.id_kelas_jilid
+                JOIN santri s ON kj.santri_id = s.id_santri
+                JOIN tahun_ajaran ta ON kj.tahun_ajaran_id = ta.id_tahun
+                WHERE kj.jilid_id = ?                   -- filter jilid
+                AND ta.id_tahun = ?                     -- filter tahun ajaran
+                GROUP BY s.id_santri, s.nama, s.nis, kj.jilid_id
+                ORDER BY rata_rata DESC";
+        $statement = $pdo->prepare($query);
+        $statement->execute([$jilid_id, $tahun_id]);
+        return $statement->fetchAll();
+    }
+
     public function findDataSkor($kelasJilidId, $tgl)
     {
         global $pdo;
-        $query = "SELECT skor_awal, skor_akhir, kategori, keterangan FROM skor WHERE kelas_jilid_id = ? AND tanggal = ?";
+        $query = "SELECT skor_awal, skor_akhir, kategori, jumlah_sp, keterangan FROM skor WHERE kelas_jilid_id = ? AND tanggal = ?";
         $statement = $pdo->prepare($query);
         $statement->execute([$kelasJilidId, $tgl]);
         return $statement->fetch();
@@ -132,14 +162,15 @@ class Skor
     }
 
     // get rekap skor
-    function getRekapSkor($kelasJilidId, $tahunAjaranId, $bulan) {
+    function getRekapSkor($jilid_id, $tahunAjaranId, $bulan) {
         global $pdo;
         $id_ustadzah = $_SESSION['id_ustadzah'];
-        $sql = " SELECT 
+        $sql = "SELECT 
                 s.id_santri,
                 s.nama,
-                sk.skor_awal,
-                sk.skor_akhir,
+                sk.jumlah_sp,
+                MAX(sk.skor_awal) AS skor_awal,
+                MAX(sk.skor_akhir) AS skor_akhir,
                 SUM(CASE WHEN a.status='A' THEN 1 ELSE 0 END) AS total_A,
                 SUM(CASE WHEN a.status='I' THEN 1 ELSE 0 END) AS total_I,
                 SUM(CASE WHEN a.status='S' THEN 1 ELSE 0 END) AS total_S,
@@ -150,21 +181,23 @@ class Skor
             JOIN jilid j ON j.id_jilid = kj.jilid_id
             LEFT JOIN skor sk 
                 ON sk.kelas_jilid_id = kj.id_kelas_jilid
+                AND DATE(sk.tanggal) = :tanggal_skor   -- filter skor di tanggal tertentu
             LEFT JOIN absensi a 
                 ON a.kelas_jilid_id = kj.id_kelas_jilid
-                AND MONTH(a.tanggal) = :bulan
-            WHERE kj.id_kelas_jilid = :id_kelas_jilid
+                AND MONTH(a.tanggal) = :bulan               -- filter absensi per bulan
+            WHERE kj.jilid_id = :jilid_id
             AND kj.tahun_ajaran_id = :tahun_ajaran_id
             AND j.id_ustadzah = :id_ustadzah
-            GROUP BY s.id_santri, s.nama, sk.skor_awal, sk.skor_akhir
+            GROUP BY s.id_santri, s.nama
             ORDER BY s.nama";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            ':id_kelas_jilid' => $kelasJilidId,
+            ':jilid_id' => $jilid_id,
             ':tahun_ajaran_id' => $tahunAjaranId,
             ':bulan' => $bulan,
-            ':id_ustadzah' => $id_ustadzah,
+            ':tanggal_skor' => $bulan,   // misalnya '2025-08-28'
+            ':id_ustadzah' => $id_ustadzah
         ]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -176,16 +209,18 @@ class Skor
         global $pdo;
         $id_ustadzah = $_SESSION['id_ustadzah'];
         $query = "SELECT 
-                    COALESCE(AVG(s.poin), 0) AS nilai_rata2,
+                    -- COALESCE(AVG(s.skor_akhir), 0) AS nilai_rata2,
+                    s.skor_akhir,
                     sa.nama as nama_santri,
                     j.nama_jilid,
-                    n.*
+                    n.*,
+                    s.kategori
                 FROM skor s
                 JOIN kelas_jilid kj ON s.kelas_jilid_id = kj.id_kelas_jilid
                 JOIN jilid j ON kj.jilid_id=j.id_jilid
                 JOIN santri sa ON kj.santri_id = sa.id_santri
                 LEFT JOIN nilai n ON kj.id_kelas_jilid=n.kelas_jilid_id
-                WHERE kj.ustadzah_id = '$id_ustadzah'
+                WHERE j.id_ustadzah = '$id_ustadzah'
                 AND kj.tahun_ajaran_id = ?";
         $statement = $pdo->prepare($query);
         $statement->execute([$thn_id]);
@@ -210,29 +245,29 @@ class Skor
         return $statement->execute([$id]);
     }
 
-    public function updateSkor($id_skor, $skor_awal, $skor_akhir, $kategori, $ket) {
+    public function updateSkor($id_skor, $skor_awal, $skor_akhir, $kategori, $jumlah_sp, $ket) {
         global $pdo;
         // Update status absensi berdasarkan id_skor
         $id_skor = intval($id_skor);
         // Update query
-        $query = "UPDATE skor SET skor_awal = ?, skor_akhir = ?, kategori = ?, keterangan = ? WHERE id_skor = ?";
+        $query = "UPDATE skor SET skor_awal = ?, skor_akhir = ?, kategori = ?, jumlah_sp = ?, keterangan = ? WHERE id_skor = ?";
         $statement = $pdo->prepare($query);
-        return $statement->execute([$skor_awal, $skor_akhir, $kategori, $ket, $id_skor]);
+        return $statement->execute([$skor_awal, $skor_akhir, $kategori, $jumlah_sp, $ket, $id_skor]);
     }
 
-    public function save($id = null, $kelas_jilid_id, $materi_id = null, $tgl, $skor_awal, $skor_akhir,  $kategori, $keterangan)
+    public function save($id = null, $kelas_jilid_id, $materi_id = null, $tgl, $skor_awal, $skor_akhir, $kategori, $jumlah_sp, $keterangan)
     {
         global $pdo;
         if ($id) {
             // Update existing data
-            $query = "UPDATE skor SET kelas_jilid_id = ?, materi_id = ?, tanggal = ?, skor_awal = ?, skor_akhir = ?, kategori = ?, keterangan  = ?";
+            $query = "UPDATE skor SET kelas_jilid_id = ?, materi_id = ?, tanggal = ?, skor_awal = ?, skor_akhir = ?, kategori = ?, jumlah_sp = ?, keterangan  = ?";
             $statement = $pdo->prepare($query);
-            return $statement->execute([$kelas_jilid_id, $materi_id, $tgl, $skor_awal, $skor_akhir, $kategori, $keterangan, $id]);
+            return $statement->execute([$kelas_jilid_id, $materi_id, $tgl, $skor_awal, $skor_akhir, $kategori, $jumlah_sp, $kategori, $keterangan, $id]);
         } else {
             // Insert new data
-            $query = "INSERT INTO skor (kelas_jilid_id, materi_id, tanggal, skor_awal, skor_akhir, kategori, keterangan) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $query = "INSERT INTO skor (kelas_jilid_id, materi_id, tanggal, skor_awal, skor_akhir, kategori, jumlah_sp, keterangan) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $statement = $pdo->prepare($query);
-            return $statement->execute([$kelas_jilid_id, $materi_id, $tgl, $skor_awal, $skor_akhir, $kategori, $keterangan]);
+            return $statement->execute([$kelas_jilid_id, $materi_id, $tgl, $skor_awal, $skor_akhir, $kategori, $jumlah_sp, $keterangan]);
         }
     }
 

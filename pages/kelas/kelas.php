@@ -30,7 +30,7 @@
               <?php
               $nomor = 1;
               foreach (get_kelas_jilid() as $row) : ?>
-                <tr data-bs-toggle="collapse" data-bs-target="#collapse<?= $row['jilid_id'] ?>" aria-expanded="false" aria-controls="collapse<?= $row['jilid_id'] ?>" style="cursor: pointer;">
+                <tr data-bs-toggle="collapse" data-bs-target="#collapse<?= $row['jilid_id'] . $row['tahun_ajaran_id'] ?>" aria-expanded="false" aria-controls="collapse<?= $row['jilid_id'] . $row['tahun_ajaran_id'] ?>" style="cursor: pointer;">
                   <td>
                     <i class="bi bi-chevron-down"></i> <?= $nomor++ ?>
                   </td>
@@ -41,7 +41,7 @@
                 </tr>
                 <tr class="collapse-detail">
                         <td colspan="7" class="p-0 border-0">
-                            <div class="collapse" id="collapse<?= $row['jilid_id'] ?>">
+                            <div class="collapse" id="collapse<?= $row['jilid_id'] . $row['tahun_ajaran_id'] ?>">
                                 <div class="card card-body border-0 rounded-0">
                                     <h6 class="mb-3">Detail Jilid: <?= $row['nama_jilid'] ?></h6>
                                     <table class="table mb-0 table-hover" id="table1">
@@ -55,7 +55,7 @@
                                       <tbody>
                                         <?php
                                         $no = 1;
-                                        foreach (get_santri_by_id_jilid($row['jilid_id']) as $santri) : ?>
+                                        foreach (get_santri_by_id_jilid($row['jilid_id'], $row['tahun_ajaran_id']) as $santri) : ?>
                                           <tr>
                                             <td><?= $no++ ?></td>
                                             <td><?= $santri['nama'] ?></td>

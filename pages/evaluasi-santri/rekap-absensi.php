@@ -2,27 +2,81 @@
 <?php
 $thn = isset($_GET['tahun']) ? intval($_GET['tahun']) : null;
 $tgl = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d'); // string, default hari ini
-$id_ustadzah = isset($_SESSION['id_ustadzah']) ? intval($_SESSION['id_ustadzah']) : null;
+if ($_SESSION['role'] == 'Ustadzah') {
+    $id_ustadzah = isset($_SESSION['id_ustadzah']) ? intval($_SESSION['id_ustadzah']) : null;
+} elseif ($_SESSION['role'] == 'Wali Kelas') {
+    $id_ustadzah = isset($_GET['jilid']) ? $_GET['jilid'] : null;
+}
 ?>
 
 <div class="card mt-4">
     <div class="card-body">
             <div class="row d-flex justify-content-between">
-                <div class="col-md-9">
+                <div class="col-md-8">
                     <h4>Rekap Absensi Santri</h4>
                 </div>
-            <!-- filter tahun-->
-                <div class="col-md-3">
-                    <select id="tahun" class="form-select" onchange="location.href='?tahun=' + this.value">
-                        <option value="">-- Semester --</option>
-                        <?php foreach (get_tahun_ajaran() as $ta): ?>
-                            <option value="<?= $ta['id_tahun'] ?>" <?= ($ta['id_tahun'] == $thn) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($ta['semester'] ." - ".$ta['tahun']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+            
+                <?php if ($_SESSION['role'] == 'Wali Kelas') : ?>
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <select id="jilid" class="form-select jilidSelect" onchange="updateFilter()">
+                                    <option value="">-- Jilid --</option>
+                                    <?php foreach (get_jilid() as $ta): ?>
+                                        <option value="<?= $ta['id_ustadzah'] ?>" <?= ($ta['id_ustadzah'] == $id_ustadzah) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($ta['nama_jilid']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <select id="tahun" class="form-select tahunSelect" onchange="updateFilter()">
+                                    <option value="">-- Semester --</option>
+                                    <?php foreach (get_tahun_ajaran() as $ta): ?>
+                                        <option value="<?= $ta['id_tahun'] ?>" <?= ($ta['id_tahun'] == $thn) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($ta['semester'] ." - ".$ta['tahun']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                <?php else : ?>
+                    <div class="col-md-4">
+                         <select id="tahun" class="form-select tahunSelect" onchange="location.href='?tahun=' + this.value">
+                            <option value="">-- Semester --</option>
+                            <?php foreach (get_tahun_ajaran() as $ta): ?>
+                                <option value="<?= $ta['id_tahun'] ?>" <?= ($ta['id_tahun'] == $thn) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($ta['semester'] ." - ".$ta['tahun']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif ?>
              </div>
+
+             <script>
+                function updateFilter() {
+                    // Ambil value dari dropdown
+                    var tahunId = document.querySelector('.tahunSelect').value;
+                    var jilidId = document.querySelector('.jilidSelect').value;
+                    
+                    // Buat parameter URL
+                    var params = new URLSearchParams();
+                    
+                    if (tahunId) params.append('tahun', tahunId);
+                    if (jilidId) params.append('jilid', jilidId);
+                    
+                    // Update URL dengan mempertahankan base URL yang benar
+                    var baseUrl = window.location.href.split('?')[0];
+                    if (params.toString()) {
+                        window.location.href = baseUrl + '?' + params.toString();
+                    } else {
+                        window.location.href = baseUrl;
+                    }
+                }
+            </script>
+
         <div class="mt-4 mb-5">
             <div class="alert alert-info">
                 <div class="row">

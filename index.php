@@ -40,22 +40,30 @@ $subtitle = switch_case($page, $action);
   <link rel="stylesheet" href="assets/css/shared/iconly.css">
 </head>
 
-<?php if ($action == 'cetak') : ?>
+<?php 
+$arrayCetak = [
+    'cetak-lap-data-santri',
+    'cetak-rekap-nilai',
+    'cetak-lap-triwulan'
+];
 
-  <body onload="window.print();">
+// Asumsikan $action berasal dari URL, misalnya: cetak-lap-data-santri
+if (in_array($action, $arrayCetak)) : 
+?>
+
+<body onload="window.print();">
     <?php
-    // Bangun path file PHP yang sesuai berdasarkan nilai page dan action
-    $pagePath = 'pages/hasil/cetak.php';
+    // Bangun path file PHP yang sesuai
+    $pagePath = 'pages/' . $page . '/' . $action . '.php';
 
-    // Cek apakah file tersebut ada, jika tidak ada, tampilkan halaman error atau default
+    // Cek apakah file tersebut ada
     if (file_exists($pagePath)) {
-      include($pagePath);
+        include($pagePath);
     } else {
-      include('pages/error404.php'); // Buat file 404.php sebagai fallback
+        include('pages/error404.php');
     }
     ?>
-
-  </body>
+</body>
 
 </html>
 <?php else : ?>

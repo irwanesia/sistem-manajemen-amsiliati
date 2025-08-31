@@ -16,20 +16,29 @@ if (isset($_POST['submit'])) {
     $alamat = $_POST['alamat'];
     $status = $_POST['status'];
 
-    // Validasi data jika diperlukan
-
-    // Simpan data menggunakan method save dari class santri
+    // --- Cek apakah NIS sudah ada ---
     $santri = new Santri();
+    $exists = $santri->findByNis($nis);
+
+    if ($exists > 0) {
+        // Jika NIS sudah ada, kirim pesan error
+        $message = urlencode("NIS $nis sudah terdaftar, gunakan NIS lain!");
+        header("Location: ../santri&error={$message}");
+        exit;
+    }
+
+    // Jika tidak duplicate, lanjut simpan
     $santri->save(null, $nis, $nama, $tempat_lahir, $tgl_lahir, $jk, $alamat, $status);
 
+    // Log aktivitas
     $log = new Log();
     $user_id = $_POST['user_id'];
     $aktivitas = $_POST['nama'] . " menambah data santri";
-    $tanggal = date('Y-m-d H:i:s'); // Perbaikan format tanggal
+    $tanggal = date('Y-m-d H:i:s');
     $log->save($user_id, $aktivitas, $tanggal);
 
     // Redirect dengan pesan berhasil
-    $message = urlencode("Data berhasil disimpan!");
+    $message = urlencode("✅ Data berhasil disimpan!");
     header("Location: ../santri&message={$message}");
     exit;
 }
